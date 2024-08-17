@@ -1,6 +1,26 @@
 import { State } from "./State";
 
-type Children = (HTMLElement | string | State<string | number, any>)[];
+export type Children = (ElementChild | TextChild | IfChild)[];
+
+export type ElementChild = Child<ChildType.Element> & {
+  element: HTMLElement,
+}
+export type TextChild = Child<ChildType.Text> & {
+  state: State<string, any>,
+}
+export type IfChild = Child<ChildType.If> & {
+  state: State<Children, any>
+}
+type Child<T extends ChildType> = {
+  __childType: T
+}
+
+export enum ChildType {
+  Element,
+  Text,
+  StatefulText,
+  If,
+}
 
 type DivAttributes = {};
 export function Div({ }: DivAttributes, children?: Children) {
@@ -11,28 +31,49 @@ type ButtonAttributes = Partial<Pick<HTMLButtonElement, "onclick">>;
 export function Button({ onclick }: ButtonAttributes, children?: Children) {
   const component = Component("button", children);
   if (onclick) {
-    component.onclick = onclick;
+    component.element.onclick = onclick;
   }
   return component;
 }
 
-function Component(tag: keyof HTMLElementTagNameMap, children?: Children) {
+function Component(tag: keyof HTMLElementTagNameMap, children?: Children): ElementChild {
   const el = document.createElement(tag);
   const textNodes = new Map<State<any, any>, Text>();
-  children?.forEach(child => {
-    if (child instanceof HTMLElement || typeof child === "string") {
-      el.append(child);
-    } else if (child instanceof State) {
-      const node = document.createTextNode(child.get() + "");
-      textNodes.set(child, node);
-      el.append(node);
-      child.addChangeListener((next) => {
-        const found = textNodes.get(child);
-        if (found) {
-          found.textContent = next + "";
-        }
-      })
-    }
-  })
-  return el;
+  const appendChildren = (children: Children, insertChild: (node: Node) => void) => {
+    children.forEach(child => {
+      switch (child.__childType) {
+        case ChildType.Element:
+          insertChild(child.element);
+          break;
+        case ChildType.Text:
+          const node = document.createTextNode(child.state.get() + "");
+          textNodes.set(child.state, node);
+          insertChild(node);
+          child.state.addChangeListener((next) => {
+            const found = textNodes.get(child.state);
+            if (found) {
+              found.textContent = next + "";
+            }
+          })
+          break;
+        case ChildType.If:
+          const startIndex = el.children.length;
+          const prev: ChildNode[] = [];
+          const onChildren = (children: Children) => {
+            prev.forEach(node => node.remove());
+            if (startIndex === el.children.length) {
+              appendChildren(children, node => el.append(node));
+            }
+            appendChildren(children, node => el.insertBefore(node, el.children[startIndex]))
+          }
+          onChildren(child.state.get());
+          child.state.addChangeListener(onChildren);
+      }
+    })
+  }
+  appendChildren(children || [], node => el.append(node));
+  return {
+    __childType: ChildType.Element,
+    element: el,
+  }
 }

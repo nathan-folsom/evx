@@ -1,5 +1,5 @@
 type ChangeListener<T> = (nextState: T) => void;
-type Reducer<Event, State> = (event: Event, previous: State) => State;
+type Reducer<Event, State> = (event: Event) => (previous: State) => State;
 
 export class State<State, Event> {
   internal: State;
@@ -10,7 +10,7 @@ export class State<State, Event> {
   }
 
   dispatchEvent = (event: Event) => {
-    this.internal = this.reducer(event, this.internal);
+    this.internal = this.reducer(event)(this.internal);
     this.listeners.forEach(l => l(this.internal));
   }
 

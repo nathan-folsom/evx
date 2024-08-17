@@ -1,5 +1,7 @@
+import If from "../lib/If";
 import { Button, Div } from "../lib/Intrinsics";
 import { state } from "../lib/State";
+import Text from "../lib/Text";
 
 export default function Counter() {
   const count = state(0, (action: "increment" | "decrement", s) => {
@@ -10,12 +12,15 @@ export default function Counter() {
         return s - 1;
     }
   })
+  const show = state(false, (count: number) => count > 2);
+  count.addChangeListener((count) => show.dispatchEvent(count));
 
   return (
     Div({}, [
-      Button({ onclick: () => count.dispatchEvent("decrement") }, ["-"]),
-      Button({ onclick: () => count.dispatchEvent("increment") }, ["+"]),
-      count
+      Button({ onclick: () => count.dispatchEvent("decrement") }, [Text("-")]),
+      Button({ onclick: () => count.dispatchEvent("increment") }, [Text("+")]),
+      Text(count),
+      If({ show }, () => [Div({}, [Text("Count is > 2")])])
     ])
   );
 }
