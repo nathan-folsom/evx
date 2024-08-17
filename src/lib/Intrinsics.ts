@@ -62,9 +62,19 @@ function Component(tag: keyof HTMLElementTagNameMap, children?: Children): Eleme
           const onChildren = (children: Children) => {
             prev.forEach(node => node.remove());
             if (startIndex === el.children.length) {
-              appendChildren(children, node => el.append(node));
+              appendChildren(children, node => {
+                el.append(node);
+                prev.push(el.children[el.children.length - 1]);
+              });
+            } else {
+              const referenceNode = el.children[startIndex];
+              let offset = 0;
+              appendChildren(children, node => {
+                offset += 1;
+                el.insertBefore(node, referenceNode);
+                prev.push(el.children[startIndex + offset]);
+              })
             }
-            appendChildren(children, node => el.insertBefore(node, el.children[startIndex]))
           }
           onChildren(child.state.get());
           child.state.addChangeListener(onChildren);
