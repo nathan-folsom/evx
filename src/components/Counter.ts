@@ -15,12 +15,13 @@ export default function Counter() {
   const show = state(false, (count: number) => count > 2);
   count.addChangeListener((count) => show.dispatchEvent(count));
 
+  console.log("render counter")
   return (
     Div({}, [
       Button({ onclick: () => count.dispatchEvent("decrement") }, [Text("-")]),
+      If({ show }, () => [Div({}, [Text("Count is > 2")])]),
       Button({ onclick: () => count.dispatchEvent("increment") }, [Text("+")]),
       Text(count),
-      If({ show }, () => [Div({}, [Text("Count is > 2")])])
     ])
   );
 }

@@ -29,6 +29,7 @@ export function Div({ }: DivAttributes, children?: Children) {
 
 type ButtonAttributes = Partial<Pick<HTMLButtonElement, "onclick">>;
 export function Button({ onclick }: ButtonAttributes, children?: Children) {
+  console.log("render button")
   const component = Component("button", children);
   if (onclick) {
     component.element.onclick = onclick;
@@ -39,8 +40,19 @@ export function Button({ onclick }: ButtonAttributes, children?: Children) {
 function Component(tag: keyof HTMLElementTagNameMap, children?: Children): ElementChild {
   const el = document.createElement(tag);
   const textNodes = new Map<State<any, any>, Text>();
-  const appendChildren = (children: Children, insertChild: (node: Node) => void) => {
-    children.forEach(child => {
+  const appendChildren = (children: Children, offset: number) => {
+    children.forEach((child, i) => {
+      console.log("offset", offset, "child index", i);
+      console.log("child", child);
+      const insertChild = (child: Node) => {
+        const insertionIndex = offset + i;
+        console.log("insert child", child);
+        console.log("child element count", el.children.length);
+        console.log("parent", el);
+        return insertionIndex === el.children.length
+          ? el.append(child)
+          : el.insertBefore(el.children[insertionIndex], child);
+      };
       switch (child.__childType) {
         case ChildType.Element:
           insertChild(child.element);
@@ -57,31 +69,23 @@ function Component(tag: keyof HTMLElementTagNameMap, children?: Children): Eleme
           })
           break;
         case ChildType.If:
-          const startIndex = el.children.length;
-          const prev: ChildNode[] = [];
+          const startIndex = children.indexOf(child) + offset;
+          let length = 0;
           const onChildren = (children: Children) => {
-            prev.forEach(node => node.remove());
-            if (startIndex === el.children.length) {
-              appendChildren(children, node => {
-                el.append(node);
-                prev.push(el.children[el.children.length - 1]);
-              });
-            } else {
-              const referenceNode = el.children[startIndex];
-              let offset = 0;
-              appendChildren(children, node => {
-                offset += 1;
-                el.insertBefore(node, referenceNode);
-                prev.push(el.children[startIndex + offset]);
-              })
+            while (length > 0) {
+              el.children[startIndex].remove();
+              length -= 1;
             }
+            length = children.length;
+            console.log("append if children", children);
+            appendChildren(children, startIndex);
           }
           onChildren(child.state.get());
           child.state.addChangeListener(onChildren);
       }
     })
   }
-  appendChildren(children || [], node => el.append(node));
+  appendChildren(children || [], 0);
   return {
     __childType: ChildType.Element,
     element: el,
