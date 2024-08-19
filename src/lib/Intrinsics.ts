@@ -40,24 +40,24 @@ export function Button({ onclick }: ButtonAttributes, children?: Children) {
 function Component(tag: keyof HTMLElementTagNameMap, children?: Children): ElementChild {
   const el = document.createElement(tag);
   const textNodes = new Map<State<any, any>, Text>();
-  const appendChildren = (children: Children, offset: number) => {
+  const appendChildren = (children: Children, getParentOffset: () => number) => {
+    const childNodeCounts: number[] = [];
     children.forEach((child, i) => {
-      console.log("offset", offset, "child index", i);
-      console.log("child", child);
+      const getOffset = () =>
+        getParentOffset() + childNodeCounts.slice(0, i).reduce((total, current) => total + current, 0);
       const insertChild = (child: Node) => {
-        const insertionIndex = offset + i;
-        console.log("insert child", child);
-        console.log("child element count", el.children.length);
-        console.log("parent", el);
+        const insertionIndex = getOffset();
         return insertionIndex === el.children.length
           ? el.append(child)
           : el.insertBefore(el.children[insertionIndex], child);
       };
       switch (child.__childType) {
         case ChildType.Element:
+          childNodeCounts.push(1);
           insertChild(child.element);
           break;
         case ChildType.Text:
+          childNodeCounts.push(1);
           const node = document.createTextNode(child.state.get() + "");
           textNodes.set(child.state, node);
           insertChild(node);
@@ -69,23 +69,26 @@ function Component(tag: keyof HTMLElementTagNameMap, children?: Children): Eleme
           })
           break;
         case ChildType.If:
-          const startIndex = children.indexOf(child) + offset;
-          let length = 0;
+          const startIndex = children.indexOf(child) + getOffset();
           const onChildren = (children: Children) => {
-            while (length > 0) {
+            while (childNodeCounts[i] > 0) {
               el.children[startIndex].remove();
-              length -= 1;
+              childNodeCounts[i] -= 1;
             }
-            length = children.length;
-            console.log("append if children", children);
-            appendChildren(children, startIndex);
+            childNodeCounts[i] = children.length;
+            appendChildren(
+              children,
+              () => getOffset()
+            );
           }
-          onChildren(child.state.get());
+          const initialChildren = child.state.get();
+          childNodeCounts.push(initialChildren.length);
+          onChildren(initialChildren);
           child.state.addChangeListener(onChildren);
       }
     })
   }
-  appendChildren(children || [], 0);
+  appendChildren(children || [], () => 0);
   return {
     __childType: ChildType.Element,
     element: el,
