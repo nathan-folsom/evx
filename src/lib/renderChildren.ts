@@ -21,18 +21,16 @@ export function renderChildren(el: HTMLElement, children: Children, getParentOff
         })
         break;
       case ChildType.If:
-        const startIndex = i + getOffset();
         const initialChildren = child.state.get();
         childNodeCounts.push(initialChildren.length);
-        renderChildren(el, initialChildren, () => getOffset());
+        renderChildren(el, initialChildren, getOffset);
         child.state.addChangeListener(children => {
           while (childNodeCounts[i] > 0) {
-            el.childNodes[startIndex].remove();
+            el.childNodes[getOffset()].remove();
             childNodeCounts[i] -= 1;
           }
           childNodeCounts[i] = children.length;
-          console.log("render next children");
-          renderChildren(el, children, () => getOffset());
+          renderChildren(el, children, getOffset);
         });
     }
   })

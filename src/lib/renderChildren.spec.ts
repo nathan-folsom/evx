@@ -45,4 +45,14 @@ describe("renderChildren util", () => {
     show.dispatchEvent(true);
     expect(parent.childNodes[0]).toEqual(child.element);
   })
+
+  it("should unrender if node", () => {
+    const parent = document.createElement("div");
+    const show = state(true, (v: boolean) => v);
+    const child = Div({});
+    const child2 = Div({});
+    renderChildren(parent, [child2, If({ show }, () => [child])]);
+    show.dispatchEvent(false);
+    expect(parent.childNodes[0]).toEqual(child2.element);
+  })
 })
