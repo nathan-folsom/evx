@@ -1,4 +1,4 @@
-import { ChildType, TextChild } from "./Intrinsics";
+import { ChildType, TextChild } from "./types";
 import { state, State } from "./State";
 
 export default function Text(input: string | State<string, any> | State<number, any>): TextChild {

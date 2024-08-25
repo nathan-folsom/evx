@@ -1,4 +1,4 @@
-import { Children, ChildType, IfChild } from "./Intrinsics";
+import { Children, ChildType, IfChild } from "./types";
 import { state, State } from "./State";
 
 export default function If({ show }: { show: State<boolean, any> }, children: () => Children): IfChild {
