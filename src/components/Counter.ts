@@ -15,7 +15,6 @@ export default function Counter() {
   const show = state(false, (count: number) => count > 2);
   count.addChangeListener((count) => show.dispatchEvent(count));
 
-  console.log("render counter")
   return (
     Div({}, [
       Button({ onclick: () => count.dispatchEvent("decrement") }, [Text("-")]),

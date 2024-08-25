@@ -9,7 +9,6 @@ export function Div({ }: DivAttributes, children?: Children) {
 
 type ButtonAttributes = Partial<Pick<HTMLButtonElement, "onclick">>;
 export function Button({ onclick }: ButtonAttributes, children?: Children) {
-  console.log("render button")
   const component = Component("button", children);
   if (onclick) {
     component.element.onclick = onclick;

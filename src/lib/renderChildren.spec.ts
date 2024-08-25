@@ -10,7 +10,7 @@ describe("renderChildren util", () => {
     const content = "text content";
     const child = Text(content);
     renderChildren(parent, [child]);
-    expect(parent.textContent).toEqual(content);
+    expect(parent.childNodes[0].textContent).toEqual(content);
   });
 
   it("should render element node", () => {
@@ -35,4 +35,14 @@ describe("renderChildren util", () => {
     renderChildren(parent, [If({ show }, () => [child])]);
     expect(parent.children.length).toEqual(0);
   });
+
+  it("should render if node in correct order", () => {
+    const parent = document.createElement("div");
+    const show = state(false, (v: boolean) => v);
+    const child = Div({});
+    renderChildren(parent, [If({ show }, () => [child]), Div({})]);
+    expect(parent.childNodes.length).toEqual(1);
+    show.dispatchEvent(true);
+    expect(parent.childNodes[0]).toEqual(child.element);
+  })
 })

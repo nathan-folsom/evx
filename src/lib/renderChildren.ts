@@ -5,12 +5,8 @@ export function renderChildren(el: HTMLElement, children: Children, getParentOff
   children.forEach((child, i) => {
     const getOffset = () =>
       getParentOffset() + childNodeCounts.slice(0, i).reduce((total, current) => total + current, 0);
-    const insertChild = (child: Node) => {
-      const insertionIndex = getOffset();
-      return insertionIndex === el.childNodes.length
-        ? el.append(child)
-        : el.insertBefore(el.childNodes[insertionIndex], child);
-    };
+    const insertChild = (child: Node) =>
+      el.insertBefore(child, el.childNodes[getOffset()] || null);;
     switch (child.__childType) {
       case ChildType.Element:
         childNodeCounts.push(1);
@@ -35,6 +31,7 @@ export function renderChildren(el: HTMLElement, children: Children, getParentOff
             childNodeCounts[i] -= 1;
           }
           childNodeCounts[i] = children.length;
+          console.log("render next children");
           renderChildren(el, children, () => getOffset());
         });
     }
